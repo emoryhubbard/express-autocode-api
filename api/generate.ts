@@ -1,4 +1,7 @@
-import puppeteer, { Page } from "puppeteer";
+import { Page } from "puppeteer-core";
+
+const chrome = require('@sparticuz/chromium')
+const puppeteer = require('puppeteer-core')
 
 export const generate = async (req: any, res: any) => {
     const apiKey = req.body.apiKey;
@@ -72,7 +75,18 @@ async function prompt(prompt: string, apiKey: string): Promise<string> {
 }
 
 async function logAndRun(code: string): Promise<string> {
-    const browser = await puppeteer.launch();
+    //const browser = await puppeteer.launch();
+    /*const browser = await puppeteer.launch({
+        headless: 'new',
+        executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      });*/
+    const browser = await puppeteer.launch({
+        args: chrome.args,
+        defaultViewport: chrome.defaultViewport,
+        executablePath: await chrome.executablePath(),
+        headless: 'new',
+        ignoreHTTPSErrors: true
+      });
     const page = await browser.newPage();
     const html = '<html><body><h1>Hello, Puppeteer!</h1></body></html>';
     const script = `
