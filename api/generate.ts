@@ -1,4 +1,8 @@
 import { Page } from "puppeteer-core";
+import fs from 'fs';
+import csvParser from 'csv-parser';
+import dotenv from "dotenv";
+dotenv.config();
 
 const chrome = require('@sparticuz/chromium')
 const puppeteer = require('puppeteer-core')
@@ -54,24 +58,33 @@ async function prompt(prompt: string, apiKey: string): Promise<string> {
         temperature: 0.7,
     };
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify(requestData),
-        });
-    
-    let code = '';
-    if (response.ok) {
-        const responseData = await response.json();
-        code = responseData.choices[0].message.content;
-    } else {
-        console.error('Failed to fetch data:', response.status, response.statusText);
-        code = "Failed to fetch data: " + response.status + " " + response.statusText;
+    let retries = 3; // Retry up to 3 times
+    while (retries > 0) {
+        try {
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${apiKey}`,
+                },
+                body: JSON.stringify(requestData),
+                });
+            
+            let code = '';
+            if (response.ok) {
+                const responseData = await response.json();
+                code = responseData.choices[0].message.content;
+            } else {
+                console.error('Failed to fetch data:', response.status, response.statusText);
+                code = "Failed to fetch data: " + response.status + " " + response.statusText;
+            }
+            return code;
+        } catch (error) {
+            console.error('Error fetching data:', error);
+            retries--;
+        }
     }
-    return code;
+    throw new Error('Failed to fetch data after multiple retries');
 }
 
 async function logAndRun(code: string): Promise<string> {
@@ -170,42 +183,100 @@ function trimToJS(inputString: string): string {
     }
     return code;
 }
-/*export const generate = async (req: any, res: any) => {
-    const apiKey = req.body.apiKey;
-    const userPrompt = req.body.prompt;
 
-    const maxAttempts = 2;
-    let passing = false;
-    let codeAttempts = [];
-    let logs = [];
-    let passingResponses = [];
-    let currPrompt = addInstruct(userPrompt)
-    let trimmedCode= '';
-    for (let i = 0; i < maxAttempts && !passing; i++) {
-        let codeAttempt = await prompt(currPrompt, apiKey); // Store each code attempt
-        codeAttempts.push(codeAttempt); // Push code attempt into the array
-        trimmedCode = codeAttempt;
-        if (needsTrimming(codeAttempt))
-            trimmedCode = trimToJS(codeAttempt);
-        console.log("Trimmed code: " + trimmedCode);
-        logs.push(await logAndRun(trimmedCode));
-        passingResponses.push(await getPassingResponse(trimmedCode, logs[i], userPrompt, apiKey)); // Store passing response of each attempt
-        passing = isPassing(passingResponses[i]);
-        if (!passing) {
-            currPrompt = addInstruct("Could you give a corrected version of this code? The logs read: " + logs[i] + " And the code reads: " + trimmedCode);
+export const makeTrainingData = async (req: any, res: any) => {
+    const jsonData = fs.readFileSync('promptData.json', 'utf-8');
+    const promptData = JSON.parse(jsonData);
+
+    if (process.env.PROD != 'false') {
+        res.status(200).send({ message: 'This API route is intended to run only in local development to produce training data for Autocode development. Switch to local and configure your environment variables to have a CHATGPT_APIKEY.'});
+        return;
+    }
+    const fileName = 'trainingData.csv';
+    const apiKey = process.env.CHATGPT_APIKEY as string;
+
+    fs.writeFile(fileName, 'is_code,line\n', (err) => {});
+    
+    const prompts = promptData.functions;
+    for (let i=0; i<401 && i<prompts.length; i++) { 
+        const currPrompt = addInstruct(prompts[i]);
+        try {
+            const codeAttempt = await prompt(currPrompt, apiKey);
+            const formatted = escapeDoubleQuotes((removeBlankLines(codeAttempt)));
+            
+            const lines = formatted.split(/\n/g);
+            for (let j=0; j<lines.length; j++)
+                await new Promise<void>((resolve) => {
+                    fs.appendFile(fileName, ',"' + lines[j] + '"\n', (e) => {resolve();});
+                });
+            //fs.appendFile(fileName, ',"' + lines[j] + '"\n', (e)=>{});
+            if ((i % 10) == 0)
+                console.log("Total API calls: " + i);
+        }
+        catch (e) {
+            console.log(e);
         }
     }
-    let code = trimmedCode;
-    let debugDetails = "Unable to generate properly working code. Debugging details:";
-    for (let i = 0; i < codeAttempts.length; i++) {
-        debugDetails += "\n\nChatGPT Response " + (i+1) + ":\n" + codeAttempts[i]
-        + "\n\nConsole logs from test run " + (i+1) + ":\n" + logs[i]
-        + "\n\nChatGPT evaluation of logs " + (i+1) + ": "
-        + "\n\nBased on the following logs, does this code look like it ran properly?\n\n"
-        + passingResponses[i];
+  
+    res.status(200).json({ message: 'No errors when making training data' });
+}
+function escapeDoubleQuotes(input: string): string {
+    return input.replace(/"/g, '""');
+  }
+function removeBlankLines(input: string): string {
+    // Split the input string into lines
+    const lines = input.split(/\n/g);
+  
+    // Filter out the lines with only whitespace characters and join them back into a single string
+    return lines.filter(line => !/^\s*$/.test(line)).join('\n');
+  }
+export const makeTextDirectories = async (req: any, res: any) => {
+    if (process.env.PROD != 'false') {
+        res.status(200).send({ message: 'This API route is intended to run only in local development to produce training data for Autocode development. Switch to local and use the api/make-training-data endpoint first, properly label it, then use this endpoint to produce text directories suitable for TensorFlow.'});
+        return;
     }
-    if (!passing)
-        code = debugDetails;
-    code += debugDetails; //comment this out when finished testing
-    res.status(200).json({ code });
-}*/
+
+    const csvFile = 'trainingData.csv';
+    const posDir = '../pos';
+    const negDir = '../neg';
+
+    let posLinesCount = 0;
+    let negLinesCount = 0;
+    let posFilesCount = 0;
+    let negFilesCount = 0;
+
+    fs.mkdirSync(posDir, { recursive: true });
+    fs.mkdirSync(negDir, { recursive: true });
+
+    fs.createReadStream(csvFile)
+        .pipe(csvParser())
+        .on('data', (row: CsvData) => {
+            if (row.is_code === '1') {
+                posLinesCount++;
+            } else {
+                negLinesCount++;
+            }
+        })
+        .on('end', () => {
+            const minCount = Math.min(posLinesCount, negLinesCount);
+            console.log(`Total lines: ${posLinesCount} positive, ${negLinesCount} negative`);
+            
+            fs.createReadStream(csvFile)
+                .pipe(csvParser())
+                .on('data', (row: CsvData) => {
+                    if ((row.is_code === '1' && posFilesCount < minCount) || (row.is_code === '0' && negFilesCount < minCount)) {
+                        const filePath = row.is_code === '1' ? `${posDir}/positive${++posFilesCount}.txt` : `${negDir}/negative${++negFilesCount}.txt`;
+                        fs.appendFileSync(filePath, row.line + '\n');
+                    }
+                })
+                .on('end', () => {
+                    console.log(`Directory structure created and data written for ${minCount} lines of each code.`);
+                });
+        });
+
+    res.status(200).json({ message: 'No errors when making text directories' });
+}
+interface CsvData {
+    is_code: string;
+    line: string;
+}

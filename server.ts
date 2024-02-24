@@ -1,6 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
-import { generate } from './api/generate';
+import { generate, makeTextDirectories, makeTrainingData } from './api/generate';
 const bodyParser = require('body-parser');
 
 dotenv.config();
@@ -17,6 +17,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.post("/api/generate", generate);
+app.get("/api/make-training-data", makeTrainingData);
+app.get("/api/make-text-directories", makeTextDirectories);
 /*app.get("/", (req: Request, res: Response) => {
     const code = 'code will be here (get)'
     res.status(200).json({ code });
