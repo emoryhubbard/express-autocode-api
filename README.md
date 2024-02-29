@@ -15,6 +15,8 @@ You can access the API directly at https://express-autocode-api.onrender.com/api
 
 The backend of Autocode is developed using the following technologies and tools:
 
+
+- **ExtractJS:** The [ExtractJS](https://github.com/emoryhubbard/extractjs) project addresses a specific problem encountered during the development of Autocode: the precise detection and extraction of JavaScript code from text passages.
 - **Express:** The Express framework is used for building the REST API. It provides a robust set of features for web and mobile applications.
 - **TypeScript:** TypeScript is used for its static typing and type-checking capabilities, which enhance code quality and maintainability.
 - **Puppeteer:** Puppeteer, a Node library, is used for automated testing and debugging. It facilitates the execution of generated code and the capture of debug information.
