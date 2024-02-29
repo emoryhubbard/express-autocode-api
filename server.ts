@@ -1,6 +1,6 @@
 import express, { Express, Request, Response, NextFunction } from "express";
 import dotenv from "dotenv";
-import { generate } from './api/generate';
+import { generate, getGenerate } from './api/generate';
 import { makeTrainingData } from "./api/make-training-data";
 import { makeTextDirectories } from "./api/make-text-directories";
 import { testAcorn } from "./api/test-acorn";
@@ -20,6 +20,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.post("/api/generate", generate);
+app.get("/api/generate", getGenerate);
 app.get("/api/make-training-data", makeTrainingData);
 app.get("/api/make-text-directories", makeTextDirectories);
 app.get("/api/test-acorn", testAcorn);

@@ -59,3 +59,7 @@ function getNextPrompt(code: string, logs: string, userPrompt: string, passingRe
 function isPassing(response: string): boolean {
     return response.toLowerCase().includes('yes');
 }
+export const getGenerate = async (req: any, res: any) => {
+    const code = 'A POST and not GET request needs to be made here. It should have a JSON body that contains a "prompt" property (a string describing the code you want to generate) and an "apiKey" property (your ChatGPT API key)';
+    res.status(200).json({ code });
+}
