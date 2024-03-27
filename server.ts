@@ -6,7 +6,8 @@ import { makeTextDirectories } from "./api/make-text-directories";
 import { testAcorn } from "./api/test-acorn";
 import { testAcornJSX } from "./api/test-acorn-jsx";
 import { getRawResponse } from "./api/get-raw-response";
-import { extractJSXRoute } from "./api/extract-jsx"
+import { extractJSXRoute } from "./api/extract-jsx";
+import { logAndRunRoute } from "./api/log-and-run";
 const bodyParser = require('body-parser');
 
 dotenv.config();
@@ -23,13 +24,15 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.post("/api/generate", generate);
+app.post("/api/extract-jsx", extractJSXRoute);
+
 app.get("/api/generate", getGenerate);
 app.get("/api/make-training-data", makeTrainingData);
 app.get("/api/make-text-directories", makeTextDirectories);
 app.get("/api/test-acorn", testAcorn);
 app.get("/api/test-acorn-jsx", testAcornJSX);
 app.get("/api/get-raw-response", getRawResponse);
-app.post("/api/extract-jsx", extractJSXRoute);
+app.get("/api/log-and-run", logAndRunRoute);
 /*app.get("/", (req: Request, res: Response) => {
     const code = 'code will be here (get)'
     res.status(200).json({ code });
