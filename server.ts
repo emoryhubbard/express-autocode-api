@@ -8,12 +8,20 @@ import { testAcornJSX } from "./api/test-acorn-jsx";
 import { getRawResponse } from "./api/get-raw-response";
 import { extractJSXRoute } from "./api/extract-jsx";
 import { logAndRunRoute } from "./api/log-and-run";
+import { addFeature } from "./api/add-feature";
+import { getFeature } from "./api/get-feature";
+import { removeFeature } from "./api/remove-feature";
+import * as admin from 'firebase-admin';
+import * as serviceAccount from '/home/emoryhubbardiv/Documents/express-autocode-api/serviceAccountKey.json';
 const bodyParser = require('body-parser');
 
 dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+  });
 
 app.use(bodyParser.json());
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -23,16 +31,21 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
-app.post("/api/generate", generate);
-app.post("/api/extract-jsx", extractJSXRoute);
-
 app.get("/api/generate", getGenerate);
+app.get("/api/get-feature", getFeature);
 app.get("/api/make-training-data", makeTrainingData);
 app.get("/api/make-text-directories", makeTextDirectories);
 app.get("/api/test-acorn", testAcorn);
 app.get("/api/test-acorn-jsx", testAcornJSX);
 app.get("/api/get-raw-response", getRawResponse);
 app.get("/api/log-and-run", logAndRunRoute);
+
+app.post("/api/generate", generate);
+app.post("/api/extract-jsx", extractJSXRoute);
+app.post("/api/feature", addFeature);
+
+app.delete("/api/remove-feature", removeFeature);
+
 /*app.get("/", (req: Request, res: Response) => {
     const code = 'code will be here (get)'
     res.status(200).json({ code });
