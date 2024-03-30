@@ -12,7 +12,7 @@ import { addFeature } from "./api/add-feature";
 import { getFeature } from "./api/get-feature";
 import { removeFeature } from "./api/remove-feature";
 import * as admin from 'firebase-admin';
-import * as serviceAccount from '/home/emoryhubbardiv/Documents/express-autocode-api/serviceAccountKey.json';
+import * as serviceAccount from './serviceAccountKey.json';
 const bodyParser = require('body-parser');
 
 dotenv.config();

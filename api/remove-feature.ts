@@ -1,5 +1,4 @@
 import * as admin from 'firebase-admin';
-import * as serviceAccount from '/home/emoryhubbardiv/Documents/express-autocode-api/serviceAccountKey.json';
 import { extractJS } from "../library/extractjs";
 import { prompt, addInstruct } from "../library/prompt"
 import { logAndRun } from "../library/run"
