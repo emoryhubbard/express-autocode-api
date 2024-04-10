@@ -11,6 +11,7 @@ import { logAndRunRoute } from "./api/log-and-run";
 import { addFeature } from "./api/add-feature";
 import { getFeature } from "./api/get-feature";
 import { removeFeature } from "./api/remove-feature";
+import { getUpdatedFunctionsRoute } from "./api/get-updated-functions";
 import * as admin from 'firebase-admin';
 import * as serviceAccount from './serviceAccountKey.json';
 const bodyParser = require('body-parser');
@@ -43,6 +44,7 @@ app.get("/api/log-and-run", logAndRunRoute);
 app.post("/api/generate", generate);
 app.post("/api/extract-jsx", extractJSXRoute);
 app.post("/api/feature", addFeature);
+app.post("/api/get-updated-functions", getUpdatedFunctionsRoute);
 
 app.delete("/api/remove-feature", removeFeature);
 

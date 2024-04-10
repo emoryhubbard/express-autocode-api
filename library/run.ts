@@ -1,9 +1,12 @@
-import { Page } from "puppeteer-core";
+/*import { Page } from "puppeteer-core";
 const chrome = require('@sparticuz/chromium');
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer-core');*/
+
+import { Page } from "puppeteer";
+const puppeteer = require('puppeteer');
 
 export async function logAndRun(code: string): Promise<string> {
-    let path = '';
+    /*let path = '';
     if (process.env.PROD != 'false')
         path = await chrome.executablePath();
     if (process.env.PROD == 'false')
@@ -15,7 +18,12 @@ export async function logAndRun(code: string): Promise<string> {
         executablePath: path,
         headless: 'new',
         ignoreHTTPSErrors: true
-      });
+      });*/
+
+      const browser = await puppeteer.launch({
+        headless: false, // Launch non-headless browser
+        ignoreHTTPSErrors: true
+    });
     
     const page = await browser.newPage();
     const html = '<html><body><h1>Hello, Puppeteer!</h1></body></html>';
